@@ -1,0 +1,225 @@
+Start Job Id: e58cd2f2797384c76820d53b959fd98085d2583156caa08eb255469591727897
+................e58cd2f2797384c76820d53b959fd98085d2583156caa08eb255469591727897
+SUCCEEDED
+Matching Job Found:e58cd2f2797384c76820d53b959fd98085d2583156caa08eb255469591727897
+Status
+------
+SUCCEEDED
+
+Requested Types
+---------------
+	Type: SHOT
+		Model Version: 2.0
+	Type: TECHNICAL_CUE
+		Model Version: 2.0
+
+
+Audio metadata
+--------------
+
+
+Video metadata
+--------------
+	Codec: h264
+	Color Range: LIMITED
+	Duration: 208408
+	Format: QuickTime / MOV
+	Frame rate: 59.940059661865234
+
+Segments
+--------
+Technical Cue
+	Confidence: 100.0
+	Type: Content
+	Duration (milliseconds): 208391
+	Start Timestamp (milliseconds): 0
+	End Timestamp (milliseconds): 208391
+	Start timecode: 00:00:00;00
+	End timecode: 00:03:28;23
+	Duration timecode: 00:03:28;23
+	Start frame number 0
+	End frame number: 12491
+	Duration frames: 12491
+
+Shot
+	Confidence: 82.86066436767578
+	Index: 0
+	Duration (milliseconds): 3603
+	Start Timestamp (milliseconds): 0
+	End Timestamp (milliseconds): 3603
+	Start timecode: 00:00:00;00
+	End timecode: 00:00:03;36
+	Duration timecode: 00:00:03;36
+	Start frame number 0
+	End frame number: 216
+	Duration frames: 216
+
+Shot
+	Confidence: 82.86066436767578
+	Index: 1
+	Duration (milliseconds): 7290
+	Start Timestamp (milliseconds): 3620
+	End Timestamp (milliseconds): 10910
+	Start timecode: 00:00:03;37
+	End timecode: 00:00:10;54
+	Duration timecode: 00:00:07;17
+	Start frame number 217
+	End frame number: 654
+	Duration frames: 437
+
+Shot
+	Confidence: 88.53363800048828
+	Index: 2
+	Duration (milliseconds): 817
+	Start Timestamp (milliseconds): 10944
+	End Timestamp (milliseconds): 11761
+	Start timecode: 00:00:10;56
+	End timecode: 00:00:11;45
+	Duration timecode: 00:00:00;49
+	Start frame number 656
+	End frame number: 705
+	Duration frames: 49
+
+Shot
+	Confidence: 83.63290405273438
+	Index: 3
+	Duration (milliseconds): 14197
+	Start Timestamp (milliseconds): 11778
+	End Timestamp (milliseconds): 25975
+	Start timecode: 00:00:11;46
+	End timecode: 00:00:25;57
+	Duration timecode: 00:00:14;11
+	Start frame number 706
+	End frame number: 1557
+	Duration frames: 851
+
+Shot
+	Confidence: 83.63290405273438
+	Index: 4
+	Duration (milliseconds): 14398
+	Start Timestamp (milliseconds): 25992
+	End Timestamp (milliseconds): 40390
+	Start timecode: 00:00:25;58
+	End timecode: 00:00:40;21
+	Duration timecode: 00:00:14;23
+	Start frame number 1558
+	End frame number: 2421
+	Duration frames: 863
+
+Shot
+	Confidence: 91.38021850585938
+	Index: 5
+	Duration (milliseconds): 7273
+	Start Timestamp (milliseconds): 40407
+	End Timestamp (milliseconds): 47680
+	Start timecode: 00:00:40;22
+	End timecode: 00:00:47;38
+	Duration timecode: 00:00:07;16
+	Start frame number 2422
+	End frame number: 2858
+	Duration frames: 436
+
+Shot
+	Confidence: 91.69229888916016
+	Index: 6
+	Duration (milliseconds): 11645
+	Start Timestamp (milliseconds): 47697
+	End Timestamp (milliseconds): 59342
+	Start timecode: 00:00:47;39
+	End timecode: 00:00:59;17
+	Duration timecode: 00:00:11;38
+	Start frame number 2859
+	End frame number: 3557
+	Duration frames: 698
+
+Shot
+	Confidence: 99.76334381103516
+	Index: 7
+	Duration (milliseconds): 31014
+	Start Timestamp (milliseconds): 59359
+	End Timestamp (milliseconds): 90373
+	Start timecode: 00:00:59;18
+	End timecode: 00:01:30;21
+	Duration timecode: 00:00:30;59
+	Start frame number 3558
+	End frame number: 5417
+	Duration frames: 1859
+
+Shot
+	Confidence: 99.04627990722656
+	Index: 8
+	Duration (milliseconds): 5822
+	Start Timestamp (milliseconds): 90390
+	End Timestamp (milliseconds): 96212
+	Start timecode: 00:01:30;22
+	End timecode: 00:01:36;11
+	Duration timecode: 00:00:05;49
+	Start frame number 5418
+	End frame number: 5767
+	Duration frames: 349
+
+Shot
+	Confidence: 83.52925109863281
+	Index: 9
+	Duration (milliseconds): 15182
+	Start Timestamp (milliseconds): 96229
+	End Timestamp (milliseconds): 111411
+	Start timecode: 00:01:36;12
+	End timecode: 00:01:51;22
+	Duration timecode: 00:00:15;10
+	Start frame number 5768
+	End frame number: 6678
+	Duration frames: 910
+
+Shot
+	Confidence: 82.06941223144531
+	Index: 10
+	Duration (milliseconds): 12797
+	Start Timestamp (milliseconds): 111427
+	End Timestamp (milliseconds): 124224
+	Start timecode: 00:01:51;23
+	End timecode: 00:02:04;14
+	Duration timecode: 00:00:12;47
+	Start frame number 6679
+	End frame number: 7446
+	Duration frames: 767
+
+Shot
+	Confidence: 82.06941223144531
+	Index: 11
+	Duration (milliseconds): 851
+	Start Timestamp (milliseconds): 124240
+	End Timestamp (milliseconds): 125091
+	Start timecode: 00:02:04;15
+	End timecode: 00:02:05;06
+	Duration timecode: 00:00:00;51
+	Start frame number 7447
+	End frame number: 7498
+	Duration frames: 51
+
+Shot
+	Confidence: 94.04144287109375
+	Index: 12
+	Duration (milliseconds): 76593
+	Start Timestamp (milliseconds): 125108
+	End Timestamp (milliseconds): 201701
+	Start timecode: 00:02:05;07
+	End timecode: 00:03:21;42
+	Duration timecode: 00:01:16;35
+	Start frame number 7499
+	End frame number: 12090
+	Duration frames: 4591
+
+Shot
+	Confidence: 99.9842529296875
+	Index: 13
+	Duration (milliseconds): 6673
+	Start Timestamp (milliseconds): 201718
+	End Timestamp (milliseconds): 208391
+	Start timecode: 00:03:21;43
+	End timecode: 00:03:28;23
+	Duration timecode: 00:00:06;40
+	Start frame number 12091
+	End frame number: 12491
+	Duration frames: 400
+
