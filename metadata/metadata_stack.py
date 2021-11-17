@@ -250,10 +250,12 @@ class MetadataStack(core.Stack):
 
         mediaAssetsOriginBucket.add_event_notification(s3.EventType.OBJECT_CREATED, s3_notifications.LambdaDestination(fnMetadata))
 
+        # create dynamodb table to store metadata
+        ddb = dynamodb.Table(self, "MetadataTable", partition_key=dynamodb.Attribute(name="id", type=dynamodb.AttributeType.STRING), removal_policy=core.RemovalPolicy.DESTROY, table_name="metaData", read_capacity=1, write_capacity=1)
+
         # create lambda function and event source from sqs
-        fnVideoProcessor = lambda_.DockerImageFunction(self, "videoProcessor", code=lambda_.DockerImageCode.from_image_asset("metadata/processor"), environment={'QUEUE_URL': queue.queue_url, 'Processed_Bucket': processedBucketName}, timeout=core.Duration.seconds(900), role=video_processor_lambda_role, memory_size=2048)
+        fnVideoProcessor = lambda_.DockerImageFunction(self, "videoProcessor", code=lambda_.DockerImageCode.from_image_asset("metadata/processor"), environment={'QUEUE_URL': queue.queue_url, 'Processed_Bucket': processedBucketName, 'ORIGINAL_BUCKET': originalBucketName, 'DYNAMODB_TABLE': ddb.table_name}, timeout=core.Duration.seconds(900), role=video_processor_lambda_role, memory_size=2048)
 
         fnVideoProcessor.add_event_source(lambda_event_sources.SqsEventSource(queue, batch_size=1))
 
-        # create dynamodb table to store metadata
-        dynamodb.Table(self, "MetadataTable", partition_key=dynamodb.Attribute(name="id", type=dynamodb.AttributeType.STRING), removal_policy=core.RemovalPolicy.DESTROY, table_name="metaData", read_capacity=1, write_capacity=1)
+

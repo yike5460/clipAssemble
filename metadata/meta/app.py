@@ -32,7 +32,7 @@ logger.setLevel(logging.INFO)
 # add execution path to ffmpeg
 os.environ['PATH'] = os.environ['PATH'] + ':' + os.environ['LAMBDA_TASK_ROOT']
 
-# testing with command aws s3 rm s3://media-assets-origin/SampleVideo_1280x720_30mb.mp4 && aws s3 cp SampleVideo_1280x720_30mb.mp4 s3://media-assets-origin/
+# testing with command aws s3 rm s3://metadata-original-video/SampleVideo_1280x720_30mb.mp4 && aws s3 cp SampleVideo_1280x720_30mb.mp4 s3://metadata-original-video/
 def lambda_handler(event, context):
     """
 
@@ -52,13 +52,12 @@ def lambda_handler(event, context):
         # Launch MediaInfo CLI to extract metadata
         # use ffprobe to fetch metadata (frame number)
         # ffprobe -v error -count_frames -select_streams v:0   -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 SampleVideo_1280x720_30mb.mp4 
+
         xml_output = subprocess.check_output(["./mediainfo", "--full", "--output=XML", signed_url])
         logger.info("mediainfo output: {}".format(xml_output))
+
         # save metadata to DynamoDB
         save_record(key, xml_output.decode('utf-8'))
-
-        # invoke rekognition to fetch tech cue and shot info
-        StartSegmentDetection(bucket=bucket, key=key)
 
         # command refer to https://www.jianshu.com/p/cf1e61eb6fc8
         # ffmpeg -i SampleVideo_1280x720_30mb.mp4 -strict -2 -qscale 0 -intra keyoutput.mp4
@@ -77,10 +76,11 @@ def lambda_handler(event, context):
 
         # Download the asset to a local file
         s3.download_file(bucket, key, LOCAL_VIDEO_FILE)
-        IFRAME_VIDEO_FILE = '/tmp/'+ key + '-iframe-output.mp4'
+
+        # Run ffmpeg to transform I-Frames, keep video suffix unchanged
+        IFRAME_VIDEO_FILE = '/tmp/'+ key.split('.')[0] + '-iframe-output.' + key.split('.')[1]
         CMD = ['ffmpeg', '-y', '-i', LOCAL_VIDEO_FILE, '-strict', '-2', '-qscale', '0', '-intra', IFRAME_VIDEO_FILE]
         SHELL_CMD = ' '.join(CMD)
-        # Run ffmpeg to transform I-Frames
         try:
             # out_bytes = subprocess.check_output(['./ffmpeg', '-y', '-i', LOCAL_VIDEO_FILE, '-strict', '-2', '-qscale', '0', '-intra', IFRAME_VIDEO_FILE])
             out_bytes = subprocess.check_output(SHELL_CMD, shell=True)
@@ -90,6 +90,12 @@ def lambda_handler(event, context):
         # Upload the transformed I-Frames to S3
         upload_file(IFRAME_VIDEO_FILE, os.environ.get('Processed_Bucket'))
         logger.info("Uploaded transformed I-Frames {} to S3".format(IFRAME_VIDEO_FILE))
+
+        bucketProcessed = os.environ.get('Processed_Bucket')
+        keyProcessed = os.path.basename(IFRAME_VIDEO_FILE)
+        print('bucketProcessed: {}, keyProcessed: {}'.format(bucketProcessed, keyProcessed))
+        # invoke rekognition to fetch tech cue and shot info
+        StartSegmentDetection(bucket = str(bucketProcessed), key = str(keyProcessed))
 
 def upload_file(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
@@ -139,8 +145,6 @@ def get_signed_url(expires_in, bucket, obj):
     s3_cli = boto3.client("s3")
     presigned_url = s3_cli.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': obj}, ExpiresIn=expires_in)
     return presigned_url
-
-
 
 def StartSegmentDetection(bucket = '', key = ''):
     
