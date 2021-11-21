@@ -64,6 +64,10 @@ def lambda_handler(event, context):
         # get shot info from reko result
         GetSegmentDetectionResults(rekMessage['JobId'], s3Object, s3Bucket, iframePath)
 
+        # delete local file
+        os.remove(iframePath)
+        logger.info("Delete local file {}".format(iframePath))
+
 def GetSegmentDetectionResults(jobId, s3Object, s3Bucket, iframePath, maxRetry=10, retryInterval=5, maxResults=10, nextToken=None):
     paginationToken = ""
     finished = False

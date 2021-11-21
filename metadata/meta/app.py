@@ -5,7 +5,8 @@ import boto3
 import os
 import json
 import sys
-import time
+import math
+import PIL.Image as Image
 
 from botocore.exceptions import ClientError
 
@@ -90,6 +91,26 @@ def lambda_handler(event, context):
         # Upload the transformed I-Frames to S3
         upload_file(IFRAME_VIDEO_FILE, os.environ.get('Processed_Bucket'))
         logger.info("Uploaded transformed I-Frames {} to S3".format(IFRAME_VIDEO_FILE))
+
+        # run ffmpeg to snapshot video in 5 second intervals
+        # ffmpeg -i SampleVideo_1280x720_30mb.mp4 -vf fps=0.1 key-snapshot-output-%d.jpeg
+        SNAPSHOT_VIDEO_FILE = '/tmp/'+ key.split('.')[0] + '-snapshot-output-%d' + '.jpeg'
+        CMD = ['ffmpeg', '-y', '-i', LOCAL_VIDEO_FILE, '-vf', 'fps=0.1', SNAPSHOT_VIDEO_FILE]
+        SHELL_CMD = ' '.join(CMD)
+        try:
+            subprocess.check_output(SHELL_CMD, shell=True)
+        except subprocess.CalledProcessError as e:
+            logger.error("Error: {}, return code {}".format(e.output.decode('utf-8'), e.returncode))
+
+        # calculate image with most entropy and upload to S3 as video cover
+        VIDEO_COVER = imageWithMaxEntropy()
+        logger.info("Video cover: {}".format(VIDEO_COVER))
+        upload_file(VIDEO_COVER, os.environ.get('Processed_Bucket'))
+        logger.info("Uploaded video cover {} to S3".format(SNAPSHOT_VIDEO_FILE))
+
+        # remove local file
+        os.remove(LOCAL_VIDEO_FILE)
+        logger.info("Removed local file {}".format(LOCAL_VIDEO_FILE))
 
         bucketProcessed = os.environ.get('Processed_Bucket')
         keyProcessed = os.path.basename(IFRAME_VIDEO_FILE)
@@ -186,3 +207,64 @@ def StartSegmentDetection(bucket = '', key = ''):
 
     startJobId = response["JobId"]
     print(f"Start Job Id: {startJobId}")
+    
+def calc_entropy(img):
+
+    # get the image size
+    width, height = img.size
+    # get the image data
+    px = img.load()
+    # get the image histogram
+    histogram = img.histogram()
+    # get the image histogram size
+    hist_size = sum(histogram)
+    # get the image histogram count
+    histogram_count = [float(h) / hist_size for h in histogram]
+    # get the image entropy
+    entropy = -sum(p * math.log(p, 2) for p in histogram_count if p != 0)
+
+    return entropy
+
+def imageWithMaxEntropy():
+
+    # get the image path
+    root_path = "/tmp/"
+
+    # get the max entropy image
+    max_entropy_image = None
+    max_entropy = 0
+
+    # get the min entropy image
+    min_entropy_image = None
+    min_entropy = 3
+
+    # get the most entropy image
+    most_entropy_image = None
+    most_entropy = 0
+
+    # set image list
+    image_list = []
+
+    # loop all images in current directory
+    for image in os.listdir(root_path):
+        if image.endswith(".jpeg"):
+            image_list.append(image)
+
+    for image in image_list:
+        # get the image path
+        image_path = os.path.join(root_path, image)
+        # get the image
+        img = Image.open(image_path)
+        # caculate the entropy
+        entropy = calc_entropy(img)
+        logger.info("Image: {}, entropy: {}".format(image, entropy))
+        # judge the entropy
+        if entropy > max_entropy:
+            max_entropy = entropy
+            max_entropy_image = image
+        if entropy < min_entropy:
+            min_entropy = entropy
+            min_entropy_image = image
+    logger.info("Max entropy image is {}".format(max_entropy_image))
+    logger.info("Min entropy image is {}".format(min_entropy_image))
+    return os.path.join(root_path, max_entropy_image)
