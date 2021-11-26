@@ -13,7 +13,6 @@ from botocore.exceptions import ClientError
 s3 = boto3.client('s3')
 rek = boto3.client('rekognition')
 sqs = boto3.client('sqs')
-sns = boto3.client('sns')
 
 dynamoDBTableName = "metaData"
 dynamodb = boto3.resource("dynamodb")
@@ -114,7 +113,8 @@ def lambda_handler(event, context):
 
         bucketProcessed = os.environ.get('Processed_Bucket')
         keyProcessed = os.path.basename(IFRAME_VIDEO_FILE)
-        print('bucketProcessed: {}, keyProcessed: {}'.format(bucketProcessed, keyProcessed))
+        logger.info("bucketProcessed: {}, keyProcessed: {}".format(bucketProcessed, keyProcessed))
+
         # invoke rekognition to fetch tech cue and shot info
         StartSegmentDetection(bucket = str(bucketProcessed), key = str(keyProcessed))
 
@@ -174,7 +174,7 @@ def StartSegmentDetection(bucket = '', key = ''):
     max_pixel_threshold = 0.1
     min_coverage_percentage = 60
 
-    print('service role arn: {}, sns topic: {}'.format(os.environ.get('REKO_ARN'), os.environ.get('TOPIC_ARN')))
+    logger.info("service role arn: {}, sns topic: {}".format(os.environ.get('REKO_ARN'), os.environ.get('TOPIC_ARN')))
 
     # # clean sqs queue before make call to rekognition
     sqsUrl = os.environ.get('QUEUE_URL')
@@ -184,7 +184,7 @@ def StartSegmentDetection(bucket = '', key = ''):
 
     # get current sqs message count
     sqsResponse = sqs.get_queue_attributes(QueueUrl=sqsUrl, AttributeNames=['ApproximateNumberOfMessages'])
-    print('sqs message count before call to rekognition: {}'.format(sqsResponse['Attributes']['ApproximateNumberOfMessages']))
+    logger.info("Current SQS message count: {}".format(sqsResponse['Attributes']['ApproximateNumberOfMessages']))
 
     response = rek.start_segment_detection(
         Video={"S3Object": {"Bucket": bucket, "Name": key}},

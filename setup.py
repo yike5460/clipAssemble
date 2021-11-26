@@ -27,7 +27,9 @@ setuptools.setup(
         "aws-cdk.aws_dynamodb==1.116.0",
         "aws-cdk.aws_s3==1.116.0",
         "aws-cdk.aws_s3_notifications==1.116.0",
-        "aws-cdk.aws_lambda_event_sources==1.116.0"
+        "aws-cdk.aws_lambda_event_sources==1.116.0",
+        "aws-cdk.aws_events==1.116.0",
+        "aws-cdk.aws_events_targets==1.116.0"
     ],
 
     python_requires=">=3.6",

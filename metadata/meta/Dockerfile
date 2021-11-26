@@ -12,7 +12,6 @@ RUN cp ./bin/mediainfo ${LAMBDA_TASK_ROOT}
 # Install static libraries to run ffmpeg 
 RUN wget https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-4.2.2-amd64-static.tar.xz
 RUN tar -xvf ffmpeg-4.2.2-amd64-static.tar.xz
-RUN pwd && ls -l ffmpeg-4.2.2-amd64-static
 RUN cp ./ffmpeg-4.2.2-amd64-static/ffmpeg ${LAMBDA_TASK_ROOT}
 RUN cp ./ffmpeg-4.2.2-amd64-static/ffprobe ${LAMBDA_TASK_ROOT}
 
@@ -21,4 +20,4 @@ COPY *.py ${LAMBDA_TASK_ROOT}
 # COPY requirements.txt  .
 # RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
-CMD ["app.lambda_handler"]
+CMD ["meta.lambda_handler"]

@@ -12,6 +12,8 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_sns_subscriptions as subs,
     aws_dynamodb as dynamodb,
+    aws_events as events,
+    aws_events_targets as targets,
     core
 )
 
@@ -150,6 +152,57 @@ class MetadataStack(core.Stack):
                         ],
                         # to be narrowed down
                         resources=["*"]
+                    ),
+                    # statement for lambda to invoke eventbridge
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "events:PutEvents"
+                        ],
+                        resources=["arn:aws:events:*:*:*"]
+                    )
+                ]
+            )
+        ])
+
+        event_processor_lambda_role = iam.Role(self, "eventProcessorLambdaRole", assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"), inline_policies=[
+            iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "logs:CreateLogGroup",
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ],
+                        # ${AWS::Partition}
+                        resources=["arn:aws:logs:*:*:*"]
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "s3:GetObject",
+                            "s3:ListBucket",
+                            "s3:PutObject"
+                        ],
+                        resources=["arn:aws:s3:::*"]
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "dynamodb:PutItem",
+                            "dynamodb:UpdateItem",
+                            "dynamodb:DeleteItem"
+                        ],
+                        resources=["arn:aws:dynamodb:*:*:table/metaData*"]
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "iam:PassRole"
+                        ],
+                        # to be narrowed down
+                        resources=["*"]
                     )
                 ]
             )
@@ -246,16 +299,27 @@ class MetadataStack(core.Stack):
         ))  
 
         # create lambda function and event source from s3 bucket
-        fnMetadata = lambda_.DockerImageFunction(self, "metadata", code=lambda_.DockerImageCode.from_image_asset("metadata/meta"), environment={'TOPIC_ARN': topic.topic_arn, 'REKO_ARN':reko_role.role_arn, 'QUEUE_URL': queue.queue_url, 'Processed_Bucket': processedBucketName}, timeout=core.Duration.seconds(900), role=metadata_lambda_role, memory_size=1024)
+        fnMetadata = lambda_.DockerImageFunction(self, "metadata", code=lambda_.DockerImageCode.from_image_asset("metadata/meta"), environment={'TOPIC_ARN': topic.topic_arn, 'REKO_ARN':reko_role.role_arn, 'QUEUE_URL': queue.queue_url, 'Processed_Bucket': processedBucketName}, timeout=core.Duration.seconds(900), role=metadata_lambda_role, memory_size=4096)
 
         mediaAssetsOriginBucket.add_event_notification(s3.EventType.OBJECT_CREATED, s3_notifications.LambdaDestination(fnMetadata))
 
         # create dynamodb table to store metadata
         ddb = dynamodb.Table(self, "MetadataTable", partition_key=dynamodb.Attribute(name="id", type=dynamodb.AttributeType.STRING), removal_policy=core.RemovalPolicy.DESTROY, table_name="metaData", read_capacity=1, write_capacity=1)
 
+        # create eventbridge rule to trigger lambda function (eventProcessor)
+        bus = events.EventBus(self, "eventBus", event_bus_name="eventBus")
+
         # create lambda function and event source from sqs
-        fnVideoProcessor = lambda_.DockerImageFunction(self, "videoProcessor", code=lambda_.DockerImageCode.from_image_asset("metadata/processor"), environment={'QUEUE_URL': queue.queue_url, 'Processed_Bucket': processedBucketName, 'ORIGINAL_BUCKET': originalBucketName, 'DYNAMODB_TABLE': ddb.table_name}, timeout=core.Duration.seconds(900), role=video_processor_lambda_role, memory_size=4096)
+        fnVideoProcessor = lambda_.DockerImageFunction(self, "videoProcessor", code=lambda_.DockerImageCode.from_image_asset("metadata/processor"), environment={'QUEUE_URL': queue.queue_url, 'Processed_Bucket': processedBucketName, 'ORIGINAL_BUCKET': originalBucketName, 'DYNAMODB_TABLE': ddb.table_name, "EVENT_BUS_NAME": bus.event_bus_name}, timeout=core.Duration.seconds(900), role=video_processor_lambda_role, memory_size=1024)
 
         fnVideoProcessor.add_event_source(lambda_event_sources.SqsEventSource(queue, batch_size=1))
+
+        # create lambda function and event source from eventbridge
+        fnEventProcessor = lambda_.DockerImageFunction(self, "eventProcessor", code=lambda_.DockerImageCode.from_image_asset("metadata/event"), environment={'Processed_Bucket': processedBucketName, 'ORIGINAL_BUCKET': originalBucketName, 'DYNAMODB_TABLE': ddb.table_name}, timeout=core.Duration.seconds(900), role=event_processor_lambda_role, memory_size=1024)
+
+        rule = events.Rule(self, "eventRule", event_bus=bus, description="eventRule", enabled=True, event_pattern=events.EventPattern(source=["custom"], detail_type=["videoShotsAndGif"])).add_target(targets.LambdaFunction(fnEventProcessor))
+
+
+        
 
 
