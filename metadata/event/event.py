@@ -52,23 +52,23 @@ def lambda_handler(event, context):
 
         # can be any string, just match with predefined process here
         LOCAL_SLICED_VIDEO_FILE = '/tmp/' + RANDOM_VIDEO_FILE
-        
-        signed_url = get_signed_url(SIGNED_URL_EXPIRATION, s3Bucket, s3Object)
-        # double quote the singed url
-        signed_url = '"' + signed_url + '"'
-
-        logger.info("iframe video bucket: {}, key: {}, signed URL: {}".format(s3Bucket, s3Object, signed_url))
-
+        LOCAL_SLICED_GIF_FILE = '/tmp/' + RANDOM_VIDEO_FILE.split('.')[0] + '.gif'
         # archive sliced video to seperate folder with same iframe prefix
         REMOTE_SLICED_VIDEO_FILE = s3Object.split('.')[0] + '/' + RANDOM_VIDEO_FILE
-        logger.info('sliced video file prefix is {}'.format(REMOTE_SLICED_VIDEO_FILE))
+        REMOTE_SLICED_GIF_FILE = s3Object.split('.')[0] + '/' + RANDOM_VIDEO_FILE.split('.')[0] + '.gif'
 
+        signed_url = get_signed_url(SIGNED_URL_EXPIRATION, s3Bucket, s3Object)
+
+        # double quote the singed url
+        signed_url = '"' + signed_url + '"'
+        logger.info("iframe video bucket: {}, key: {}, signed URL: {}".format(s3Bucket, s3Object, signed_url))
+
+        # slice video
         CMD = ['ffmpeg', '-ss', startTimecodeSMPTE, '-t', durationSMPTE, '-i', signed_url, '-vcodec copy -acodec copy ', LOCAL_SLICED_VIDEO_FILE]
         SHELL_CMD = ' '.join(CMD)
         try:
             # out_bytes = subprocess.check_output(['./ffmpeg', '-y', '-i', LOCAL_VIDEO_FILE, '-strict', '-2', '-qscale', '0', '-intra', LOCAL_SLICED_VIDEO_FILE])
             out_bytes = subprocess.check_output(SHELL_CMD, shell=True)
-            # Upload the transformed I-Frames to S3
             upload_file(LOCAL_SLICED_VIDEO_FILE, s3Bucket, REMOTE_SLICED_VIDEO_FILE)
             logger.info("Uploaded sliced I-Frames {} to S3".format(REMOTE_SLICED_VIDEO_FILE))
 
@@ -77,7 +77,22 @@ def lambda_handler(event, context):
 
         except subprocess.CalledProcessError as e:
             logger.error("Error: {}, return code {}".format(e.output.decode('utf-8'), e.returncode))
-            
+
+        # generate gif from sliced video
+        CMD = ['ffmpeg', '-loglevel error -ss', startTimecodeSMPTE, '-t', durationSMPTE, '-y -i', signed_url, '-vf "fps=10,scale=240:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -loop 0', LOCAL_SLICED_GIF_FILE]
+
+        SHELL_CMD = ' '.join(CMD)
+        try:
+            out_bytes = subprocess.check_output(SHELL_CMD, shell=True)
+            upload_file(LOCAL_SLICED_GIF_FILE, s3Bucket, REMOTE_SLICED_GIF_FILE)
+            logger.info("Uploaded sliced GIF image {} to S3".format(REMOTE_SLICED_GIF_FILE))
+
+            # delete local file
+            os.remove(LOCAL_SLICED_GIF_FILE)
+
+        except subprocess.CalledProcessError as e:
+            logger.error("Error: {}, return code {}".format(e.output.decode('utf-8'), e.returncode))
+
 def get_signed_url(expires_in, bucket, obj):
     """
     Generate a signed URL
